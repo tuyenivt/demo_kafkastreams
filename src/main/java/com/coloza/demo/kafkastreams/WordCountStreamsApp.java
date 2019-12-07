@@ -6,6 +6,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
@@ -16,9 +17,14 @@ import java.util.concurrent.CountDownLatch;
 
 public class WordCountStreamsApp {
 
+    private static final String DEFAULT_BOOTSTRAP_SERVER = "localhost:9092";
     private static final String APPLICATION_ID = "wordcount-streams-app";
     private static final String SHUTDOWN_HOOK_THREAD_NAME = "wordcount-streams-shutdown-hook";
     private String bootstrapServer;
+
+    public WordCountStreamsApp() {
+        this(DEFAULT_BOOTSTRAP_SERVER);
+    }
 
     public WordCountStreamsApp(String bootstrapServer) {
         this.bootstrapServer = bootstrapServer;
@@ -34,7 +40,7 @@ public class WordCountStreamsApp {
         return properties;
     }
 
-    public void stream(String fromTopic, String toTopic) {
+    public Topology createTopology(String fromTopic, String toTopic) {
         StreamsBuilder builder = new StreamsBuilder();
         // 1 - <stream> from kafka
         KStream<String, String> wordCountInput = builder.stream(fromTopic);
@@ -51,14 +57,30 @@ public class WordCountStreamsApp {
                 .count();
         // 7 - <to> in order to write the results back to kafka
         count.toStream().to(toTopic, Produced.with(Serdes.String(), Serdes.Long()));
+        return builder.build();
+    }
 
+    public static void main(String[] args) {
+        String inputTopic = "streams-plaintext-input";
+        String outputTopic = "streams-wordcount-output";
+        if (args.length > 2) {
+            outputTopic = args[2];
+        }
+        if (args.length > 1) {
+            inputTopic = args[1];
+        }
+        String bootstrapServer = DEFAULT_BOOTSTRAP_SERVER;
+        if (args.length > 0) {
+            bootstrapServer = args[0];
+        }
+        WordCountStreamsApp app = new WordCountStreamsApp(bootstrapServer);
         // build the topology and start our streams
-        KafkaStreams streams = new KafkaStreams(builder.build(), this.createStreamsProperties());
+        KafkaStreams streams = new KafkaStreams(app.createTopology(inputTopic, outputTopic), app.createStreamsProperties());
         CountDownLatch latch = new CountDownLatch(1);
 
         // shutdown hook to correctly close the streams application
         // attach shutdown handler to catch control Ctrl+C
-        Runtime.getRuntime().addShutdownHook(new Thread(this.SHUTDOWN_HOOK_THREAD_NAME){
+        Runtime.getRuntime().addShutdownHook(new Thread(SHUTDOWN_HOOK_THREAD_NAME) {
             @Override
             public void run() {
                 streams.close();
