@@ -82,7 +82,7 @@
                        --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
 </pre>
 <p><strong>Start kafka streams application</strong>:</p>
-<pre>kafka-run-class com.coloza.demo.kafkastreams.FavouriteColourStreamsAppTests</pre>
+<pre>kafka-run-class com.coloza.demo.kafkastreams.FavouriteColourStreamsAppRunner</pre>
 <p><strong>Start kafka producer</strong>: using <code>kafka-console-producer</code> to send messages</p>
 <pre>kafka-console-producer --broker-list localhost:9092 --topic favouritecolour-streams-input</pre>
 <p>Now you can see what output on <code>kafka consumer</code>, keeping send messages and see output changes</p>

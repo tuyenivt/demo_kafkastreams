@@ -1,6 +1,6 @@
 package com.coloza.demo.kafkastreams;
 
-public class FavouriteColourStreamsAppTests {
+public class FavouriteColourStreamsAppRunner {
 
     public static void main(String[] args) {
         FavouriteColourStreamsApp app = new FavouriteColourStreamsApp("localhost:9092");
